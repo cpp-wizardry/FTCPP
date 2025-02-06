@@ -1,0 +1,7 @@
+Il y a une difference entre l'ordre de byte d'une machine et celui d'un réseau
+conversions faite par la fonction htons() qui prend le port en paramètre
+
+sockaddr_in serverAddress;
+serverAddress.sin_family = AF_INET;
+serverAddress.sin_port = htons(PORT);
+serverAddress.sin_addr.S_un.S_addr = INADDR_ANY;
