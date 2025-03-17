@@ -27,7 +27,6 @@ int main() {
         WSACleanup();
         return 1;
     }
-
     control_sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
     if (control_sock == INVALID_SOCKET) {
         std::cerr << "Socket creation failed: " << WSAGetLastError() << "\n";
@@ -46,26 +45,24 @@ int main() {
 
     freeaddrinfo(res);
 
-    // Receive welcome message
     std::string response = ftp_command(control_sock, "");
     std::cout << response << std::endl;
 
-    // Log in
     std::cout << "Enter username: ";
     std::cin >> username;
     response = ftp_command(control_sock, "USER " + username + "\r\n");
     std::cout << response;
 
-    std::cout << "Enter password: ";
-    std::cin >> password;
+    std::cout << "Enter password: "<<"default password taken for testing";
+    //std::cin >> password;
+    password = "rNrKYTX9g7z3RgJRmxWuGHbeu";
     response = ftp_command(control_sock, "PASS " + password + "\r\n");
     std::cout << response;
 
-    // Enter Passive Mode
+    
     response = ftp_command(control_sock, "PASV\r\n");
     std::cout << response;
 
-    // Parse PASV response
     std::string data_ip;
     int data_port;
     if (!parse_pasv_response(response, data_ip, data_port)) {
@@ -74,10 +71,9 @@ int main() {
         WSACleanup();
         return 1;
     }
-
+        
     std::cout << "Data connection: " << data_ip << ":" << data_port << std::endl;
 
-    // Establish data connection
     SOCKET data_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (data_sock == INVALID_SOCKET) {
         std::cerr << "Data socket creation failed: " << WSAGetLastError() << "\n";
@@ -99,32 +95,59 @@ int main() {
         return 1;
     }
 
-    // Download file
-    std::cout << "Enter file name to download: ";
+    response = ftp_command(control_sock, "LIST\r\n");
+    std::cout << response;
+
+    char list_buffer[BUFFER_SIZE];
+    int bytes_received;
+    while ((bytes_received = recv(data_sock, list_buffer, BUFFER_SIZE - 1, 0)) > 0) {
+        list_buffer[bytes_received] = '\0'; 
+        std::cout << list_buffer;
+    }
+
+    std::cout << "\nFile listing complete.\n";
+
+    closesocket(data_sock);
+
+    std::cout << "Enter file name to download: Don't forget PASV or PORT";
     std::cin >> fileName;
     response = ftp_command(control_sock, "RETR " + fileName + "\r\n");
     std::cout << response;
+        
+    /*if (response != "150 Opening data connection") {
+        std::cerr << "Retrieving hasn't given a good anwser.\n" << response;
+        closesocket(data_sock);
+        closesocket(control_sock);
+        WSACleanup();
+        return 1;
+    }*/
 
-    // Receive file data
     char file_buffer[BUFFER_SIZE];
     std::ofstream file(fileName, std::ios::binary);
     if (!file.is_open()) {
         std::cerr << "Failed to open file for writing\n";
-        closesocket(data_sock);
         closesocket(control_sock);
         WSACleanup();
         return 1;
     }
 
-    int bytes_received;
-    while ((bytes_received = recv(data_sock, file_buffer, BUFFER_SIZE, 0)) > 0) {
-        file.write(file_buffer, bytes_received);
+
+    if ((bytes_received = recv(data_sock, file_buffer, BUFFER_SIZE, 0)) > 0)
+    {
+
+        while ((bytes_received = recv(data_sock, file_buffer, BUFFER_SIZE, 0)) > 0) {
+             file.write(file_buffer, bytes_received);
+            }
     }
+    else
+    {
+        std::cout << bytes_received << " <- bytes received | file_buffer ->" << file_buffer;
+    }
+    
 
     file.close();
     closesocket(data_sock);
 
-    // Quit
     response = ftp_command(control_sock, "QUIT\r\n");
     std::cout << response;
 

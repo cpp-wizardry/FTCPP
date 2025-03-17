@@ -5,19 +5,21 @@
 std::string ftp_command(SOCKET sock, const std::string& command) {
     send(sock, command.c_str(), static_cast<int>(command.length()), 0);
 
+    std::string response;
     char buffer[BUFFER_SIZE] = { 0 };
-    int bytesReceived = recv(sock, buffer, BUFFER_SIZE - 1, 0);
-    if (bytesReceived <= 0) {
-        return "Error receiving response";
+
+    while (true) {
+        int bytesReceived = recv(sock, buffer, BUFFER_SIZE - 1, 0);
+        if (bytesReceived <= 0) { std::cout << bytesReceived << "bytes reçu"; break; }
+        buffer[bytesReceived] = '\0';
+        response += buffer;
+        std::cout << response;
+        if (bytesReceived < BUFFER_SIZE - 1) break;
     }
 
-    return std::string(buffer, bytesReceived);
+    return response;
 }
 
-bool isValidFTP(const std::string& url) {
-    std::regex ftpRegex(R"(^(ftp:\/\/)([a-zA-Z0-9._-]+(:[a-zA-Z0-9._-]+)?@)?([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})(:[0-9]+)?(\/.*)?$)");
-    return std::regex_match(url, ftpRegex);
-}
 
 
 bool parse_pasv_response(const std::string& response, std::string& ip, int& port) {
