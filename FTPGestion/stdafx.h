@@ -1,15 +1,17 @@
 #pragma once
+//stdafx.h
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
 #include <iostream>
 #include <string>
-#include <cstring>
-#include <WinSock2.h>
-#include <sys/types.h>
 #include <fstream>
-#include <WS2tcpip.h>
 #include <regex>
-#include <iostream>
-#include <string>
-#define PORT 3006 /* Port client*/
-#define FTP_SOCKET "21" /* Socket dedier à la transmission de commande entre client et serveur ftp*/
-#define FTP_SOCKET_DATA "20" /* Socket dedier à la transmission de fichier entre client et serveur ftp*/
-#define BUFFER_SIZE 1024 /*Taille du buffer*/
+#include <thread>
+#include <chrono>
+
+#pragma comment(lib, "ws2_32.lib")
+
+#define BUFFER_SIZE 1024
+#define FTP_CONTROL_PORT "21"
